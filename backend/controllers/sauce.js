@@ -12,7 +12,11 @@ exports.createSauce = (req, res, next) => {
     imageUrl: `${req.protocol}://${req.get("host")}/img/${req.file.filename}`, // Ajout de son image
   });
   // Tentative d'enregistrement
-  sauce.save();
+  sauce.save(function (err, sauce) {
+    if (err) {
+      res.status(400).json({ err });
+    }
+  });
   // Remise aux valeurs par défaut de certains champs (Demandé dans le brief)
   saucesSchema
     .find()
@@ -158,7 +162,9 @@ exports.likeSauce = (req, res, next) => {
               )
               .catch((error) => res.status(400).json({ error }));
           } else {
-            res.status(400).json({ message: "cette utilisateur aime déjà cette sauce !" });
+            res
+              .status(400)
+              .json({ message: "cette utilisateur aime déjà cette sauce !" });
           }
           break;
         // est sans avis
@@ -174,8 +180,8 @@ exports.likeSauce = (req, res, next) => {
               )
               .then(() => res.status(200).json({ message: "No preference" }))
               .catch((error) => res.status(400).json({ error }));
-          } 
-          
+          }
+
           if (sauce.usersDisliked.includes(req.body.userId)) {
             sauce
               .updateOne(
@@ -205,7 +211,9 @@ exports.likeSauce = (req, res, next) => {
               .then(() => res.status(201).json({ message: "Dislike retiré !" }))
               .catch((error) => res.status(400).json({ error }));
           } else {
-            res.status(400).json({ message: "cette utilisateur n'aime déjà pas cette sauce !" });
+            res.status(400).json({
+              message: "cette utilisateur n'aime déjà pas cette sauce !",
+            });
           }
           break;
 
