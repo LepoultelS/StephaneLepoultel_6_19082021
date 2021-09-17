@@ -157,9 +157,10 @@ exports.likeSauce = (req, res, next) => {
                 res.status(200).json({ message: "Preferences added" })
               )
               .catch((error) => res.status(400).json({ error }));
+          } else {
+            res.status(400).json({ message: "cette utilisateur aime déjà cette sauce !" });
           }
           break;
-
         // est sans avis
         case 0:
           // Si la sauce avait déjà été liké par cet utilisateur
@@ -173,7 +174,9 @@ exports.likeSauce = (req, res, next) => {
               )
               .then(() => res.status(200).json({ message: "No preference" }))
               .catch((error) => res.status(400).json({ error }));
-          } else {
+          } 
+          
+          if (sauce.usersDisliked.includes(req.body.userId)) {
             sauce
               .updateOne(
                 { _id: req.params.id },
@@ -202,6 +205,8 @@ exports.likeSauce = (req, res, next) => {
               )
               .then(() => res.status(200).json({ message: "Disliked sauce" }))
               .catch((error) => res.status(400).json({ error }));
+          } else {
+            res.status(400).json({ message: "cette utilisateur n'aime déjà pas cette sauce !" });
           }
           break;
       }
