@@ -138,7 +138,7 @@ exports.modifySauce = (req, res, next) => {
 exports.likeSauce = (req, res, next) => {
   // On récupère les informations de la sauce
   saucesSchema
-    .findOne({ _id: req.params.id })
+    .findOne({ _id: req.params.id }) // on récupère les informations de la sauce
     .then((sauce) => {
       // Si l'utilisateur
       switch (req.body.like) {
@@ -181,38 +181,53 @@ exports.likeSauce = (req, res, next) => {
               .updateOne(
                 { _id: req.params.id },
                 {
-                  $pull: { usersDisliked: req.body.userId },
-                  $inc: { dislikes: -1 },
+                  // on met à jour la sauce
+                  $inc: { likes: -1 }, // incrémentation -1 like
+                  $pull: { usersLiked: req.body.userId }, // on retire le userId dans le tableau des utilisateurs qui like la sauce
+                  _id: req.params.id,
                 }
               )
-              .then(() => res.status(200).json({ message: "No preference" }))
+              .then(() => res.status(201).json({ message: "Like retiré !" }))
               .catch((error) => res.status(400).json({ error }));
           }
-          break;
-
-        // a disliké
-        case -1:
-          if (!sauce.usersDisliked.includes(req.body.userId)) {
-            // On ajoute l'id user au tableau des utilisateurs qui n'ont pas aimé cette sauce
-            // et on incrémente le nombre de dislikes
+          if (sauce.usersDisliked.find((user) => user === req.body.userId)) {
+            // si l'utilisateur est trouvé dans le tableau des dislike
             saucesSchema
               .updateOne(
                 { _id: req.params.id },
                 {
-                  $push: { usersDisliked: req.body.userId },
-                  $inc: { dislikes: 1 },
+                  // on met à jour la sauce
+                  $inc: { dislikes: -1 }, // incrémentation -1 dislike
+                  $pull: { usersDisliked: req.body.userId }, // on retire le userId dans le tableau des utilisateurs qui dislike la sauce
+                  _id: req.params.id,
                 }
               )
-              .then(() => res.status(200).json({ message: "Disliked sauce" }))
+              .then(() => res.status(201).json({ message: "Dislike retiré !" }))
               .catch((error) => res.status(400).json({ error }));
           } else {
             res.status(400).json({ message: "cette utilisateur n'aime déjà pas cette sauce !" });
           }
           break;
+
+        case 1: // si l'utilisateur dislike la sauce
+          saucesSchema
+            .updateOne(
+              { _id: req.params.id },
+              {
+                // on met à jour la sauce
+                $inc: { likes: 1 }, // incrémentation +1 like
+                $push: { usersLiked: req.body.userId }, // on ajoute le userId dans le tableau des utilisateurs qui like la sauce
+                _id: req.params.id,
+              }
+            )
+            .then(() => res.status(201).json({ message: "Like ajouté !" }))
+            .catch((error) => res.status(400).json({ error }));
+          break;
+
+        default:
+          // si aucun des cas précédent n'est trouvé
+          return res.status(500).json({ error });
       }
     })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).json({ error });
-    });
+    .catch((error) => res.status(500).json({ error }));
 };
